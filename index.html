@@ -732,7 +732,8 @@
       const members = team.players.filter(p => selectedPlayers.has(p));
       const shuffled = shuffle([...members]);
       shuffled.forEach((p, i) => {
-        if (i % 2 === 0) teamA.push(p);
+        // Always add to the smaller team to keep balance
+        if (teamA.length <= teamB.length) teamA.push(p);
         else teamB.push(p);
       });
     }
@@ -748,12 +749,11 @@
     // Step 3: Shuffle random pool and distribute to fill remaining slots
     randomPool = shuffle([...randomPool]);
 
-    const slotsA = teamSize - teamA.length;
-    const slotsB = teamSize - teamB.length;
-
-    // Fill team A first, then team B
-    teamA.push(...randomPool.splice(0, slotsA));
-    teamB.push(...randomPool.splice(0, slotsB));
+    // Fill into the smaller team first to maintain balance
+    while (randomPool.length > 0) {
+      if (teamA.length <= teamB.length) teamA.push(randomPool.pop());
+      else teamB.push(randomPool.pop());
+    }
 
     displayResult(teamA, teamB);
     switchView('resultView');
