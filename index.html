@@ -102,6 +102,37 @@
   .selected-info { font-size: 0.85rem; color: var(--text-dim); }
   .selected-info.odd { color: var(--red); font-weight: 600; }
 
+  .strategy-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    flex-shrink: 0;
+    margin-bottom: 6px;
+  }
+  .strategy-btn {
+    flex: 1;
+    padding: 6px 4px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+  }
+  .strategy-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(108,99,255,0.3);
+  }
+  .strategy-btn:not(.active):active { background: rgba(108,99,255,0.1); }
+
   .view {
     display: none;
     flex: 1;
@@ -555,13 +586,18 @@
     <div class="selected-info" id="selectedInfo">已选 0 人</div>
   </div>
 
+  <div class="strategy-bar" id="strategyBar">
+    <button class="strategy-btn active" data-strategy="split" onclick="setStrategy('split')">🔀 拆分均衡</button>
+    <button class="strategy-btn" data-strategy="score" onclick="setStrategy('score')">📊 分值均衡</button>
+  </div>
+
   <!-- SELECT VIEW -->
   <div class="view active" id="selectView">
     <div class="select-view">
       <div class="teams-list" id="teamsList"></div>
       <div class="hint-box">
-        <p><span class="hl">🎲 随机</span> 关闭（默认）：该组人员<span class="hl">均衡分配</span>，尽量拆到两边</p>
-        <p><span class="hl-orange">🎲 随机</span> 开启：该组人员进入<span class="hl-orange">随机池</span>，不判断实力，纯随机分配</p>
+        <p>🔀 <span class="hl">拆分均衡</span>：同组人员拆到两边，🎲 随机组进随机池</p>
+        <p>📊 <span class="hl">分值均衡</span>：按实力分值随机分组，确保两队分差≤10</p>
       </div>
     </div>
     <div class="bottom-bar">
@@ -597,7 +633,16 @@
     t5: { label: 'T5', players: ['陈志超', '陈子龙'] },
   };
 
+  const SKILL = {
+    '李凯龙': 100, '罗政委': 95,
+    '廖伟': 90, '罗强': 85,
+    '李宇': 80, '李新': 80, '游浩': 80,
+    '郑梦靥': 75, '李立': 75,
+    '陈志超': 70, '陈子龙': 65,
+  };
+
   let selectedPlayers = new Set();
+  let strategy = 'split'; // 'split' or 'score'
   // Per-T random toggle
   let teamRandom = { t1: false, t2: false, t3: false, t4: false, t5: false };
 
@@ -632,7 +677,7 @@
               <div class="chip-check">
                 <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
               </div>
-              <span class="chip-name">${p}</span>
+              <span class="chip-name">${p} <span style="font-size:0.65rem;opacity:0.6">${SKILL[p]}</span></span>
               <div class="chip-random-dot"></div>
             </div>
           `).join('')}
@@ -656,6 +701,13 @@
   function toggleRandom(teamKey) {
     teamRandom[teamKey] = !teamRandom[teamKey];
     renderTeamsList();
+  }
+
+  function setStrategy(s) {
+    strategy = s;
+    document.querySelectorAll('.strategy-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.strategy === s);
+    });
   }
 
   function selectAll() {
@@ -722,42 +774,77 @@
       return;
     }
 
+    let teamA, teamB;
+    if (strategy === 'score') {
+      [teamA, teamB] = generateScoreBased(n);
+    } else {
+      [teamA, teamB] = generateSplitBased(n);
+    }
+
+    displayResult(teamA, teamB);
+    switchView('resultView');
+    launchConfetti();
+  }
+
+  // Strategy 1: Split-based (original) — distribute same-T members across teams
+  function generateSplitBased(n) {
     const teamSize = n / 2;
     let teamA = [];
     let teamB = [];
 
-    // Step 1: For non-random T-levels, distribute members evenly across teams
     for (const [key, team] of Object.entries(TEAMS)) {
-      if (teamRandom[key]) continue; // skip random teams
+      if (teamRandom[key]) continue;
       const members = team.players.filter(p => selectedPlayers.has(p));
       const shuffled = shuffle([...members]);
-      shuffled.forEach((p, i) => {
-        // Always add to the smaller team to keep balance
+      shuffled.forEach(p => {
         if (teamA.length <= teamB.length) teamA.push(p);
         else teamB.push(p);
       });
     }
 
-    // Step 2: Collect random pool members
     let randomPool = [];
     for (const [key, team] of Object.entries(TEAMS)) {
       if (!teamRandom[key]) continue;
       const members = team.players.filter(p => selectedPlayers.has(p));
       randomPool.push(...members);
     }
-
-    // Step 3: Shuffle random pool and distribute to fill remaining slots
     randomPool = shuffle([...randomPool]);
 
-    // Fill into the smaller team first to maintain balance
     while (randomPool.length > 0) {
       if (teamA.length <= teamB.length) teamA.push(randomPool.pop());
       else teamB.push(randomPool.pop());
     }
 
-    displayResult(teamA, teamB);
-    switchView('resultView');
-    launchConfetti();
+    return [teamA, teamB];
+  }
+
+  // Strategy 2: Score-based — try many random splits, pick one with min score diff (≤10)
+  function generateScoreBased(n) {
+    const teamSize = n / 2;
+    const allSelected = [...selectedPlayers];
+    const MAX_DIFF = 10;
+    const ATTEMPTS = 3000;
+
+    let bestA = null, bestB = null, bestDiff = Infinity;
+
+    for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+      const shuffled = shuffle([...allSelected]);
+      const a = shuffled.slice(0, teamSize);
+      const b = shuffled.slice(teamSize);
+
+      const scoreA = a.reduce((s, p) => s + (SKILL[p] || 0), 0);
+      const scoreB = b.reduce((s, p) => s + (SKILL[p] || 0), 0);
+      const diff = Math.abs(scoreA - scoreB);
+
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestA = a;
+        bestB = b;
+        if (diff <= MAX_DIFF) break; // good enough
+      }
+    }
+
+    return [bestA, bestB];
   }
 
   function shuffle(arr) {
@@ -775,7 +862,8 @@
     const modeTag = document.getElementById('resultModeTag');
 
     const n = selectedPlayers.size;
-    modeTag.innerHTML = `<span>${n/2}v${n/2} 对抗</span>`;
+    const strategyLabel = strategy === 'score' ? '📊 分值均衡' : '🔀 拆分均衡';
+    modeTag.innerHTML = `<span>${n/2}v${n/2} · ${strategyLabel}</span>`;
 
     // Build set of random-pool players for tagging
     const randomPlayers = new Set();
@@ -796,20 +884,27 @@
       const tk = getPlayerTeamKey(name);
       const ti = Object.keys(TEAMS).indexOf(tk) + 1;
       const isRand = randomPlayers.has(name);
+      const score = SKILL[name] || 0;
       return `
         <div class="result-player">
           <span class="player-team-badge badge-t${ti}">${TEAMS[tk].label}</span>
           <span class="result-player-name">${name}</span>
+          <span style="font-size:0.65rem;color:var(--text-dim);margin-left:auto;">${score}</span>
           ${isRand ? '<span class="random-tag">🎲</span>' : ''}
         </div>
       `;
     }
+
+    const scoreA = teamA.reduce((s, p) => s + (SKILL[p] || 0), 0);
+    const scoreB = teamB.reduce((s, p) => s + (SKILL[p] || 0), 0);
+    const scoreDiff = Math.abs(scoreA - scoreB);
 
     battleField.innerHTML = `
       <div class="team-result red-team">
         <div class="team-result-header">
           <div class="team-icon">🔴</div>
           <span class="team-result-name">红队</span>
+          <span style="font-size:0.72rem;color:var(--red-light);margin-left:auto;">${scoreA}分</span>
         </div>
         ${teamA.map(renderPlayer).join('')}
       </div>
@@ -817,6 +912,7 @@
         <div class="team-result-header">
           <div class="team-icon">🔵</div>
           <span class="team-result-name">蓝队</span>
+          <span style="font-size:0.72rem;color:var(--blue-light);margin-left:auto;">${scoreB}分</span>
         </div>
         ${teamB.map(renderPlayer).join('')}
       </div>
@@ -840,15 +936,21 @@
     const balancedCount = n - randomCount;
 
     let infoHtml = '';
-    if (balancedCount > 0) {
-      infoHtml += `<div class="split-label">均衡分配：${splitCount}/${totalTSplit} 组拆分到双方</div>`;
+    if (strategy === 'score') {
+      const diffColor = scoreDiff <= 10 ? 'var(--green)' : 'var(--red)';
+      infoHtml += `<div class="split-label">📊 分值均衡模式 · 分差 <span style="color:${diffColor};font-weight:700;">${scoreDiff}</span> ${scoreDiff <= 10 ? '✅' : '⚠️'}</div>`;
+    } else {
+      if (balancedCount > 0) {
+        infoHtml += `<div class="split-label">🔀 拆分均衡：${splitCount}/${totalTSplit} 组拆分到双方</div>`;
+      }
+      if (randomCount > 0) {
+        infoHtml += `<div class="split-label">🎲 随机池：${randomCount} 人随机分配</div>`;
+      }
+      if (balancedCount > 0 && randomCount > 0) {
+        infoHtml += `<div class="split-label" style="margin-top:2px;color:var(--orange);">混合模式：均衡组优先分拆 + 随机池填充</div>`;
+      }
     }
-    if (randomCount > 0) {
-      infoHtml += `<div class="split-label">随机池：${randomCount} 人随机分配</div>`;
-    }
-    if (balancedCount > 0 && randomCount > 0) {
-      infoHtml += `<div class="split-label" style="margin-top:2px;color:var(--orange);">混合模式：均衡组优先分拆 + 随机池填充</div>`;
-    }
+    infoHtml += `<div class="split-label" style="margin-top:1px;">红队 ${scoreA}分 vs 蓝队 ${scoreB}分</div>`;
 
     balanceInfo.innerHTML = infoHtml;
   }
