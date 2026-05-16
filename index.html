@@ -1003,6 +1003,11 @@
                 return "T5";
             }
 
+            function getTierRange(tier) {
+                const ranges = { T1: "95+", T2: "85-94", T3: "75-84", T4: "65-74", T5: "0-64" };
+                return ranges[tier] || "";
+            }
+
             // 获取指定T级别的所有玩家
             function getPlayersByTier(tier) {
                 return Object.entries(SKILL)
@@ -1064,7 +1069,7 @@
                     row.dataset.team = idx;
                     row.innerHTML = `
         <div class="team-top">
-          <div class="team-header">${key} · ${players.length}人</div>
+          <div class="team-header">${key} · ${getTierRange(key)} · ${players.length}人</div>
           ${
               isScoreMode
                   ? ""
@@ -1312,7 +1317,7 @@
                     const score = SKILL[name] || 0;
                     return `
         <div class="result-player">
-          <span class="player-team-badge badge-t${ti}">${tk}</span>
+          <span class="player-team-badge badge-t${ti}">${tk} · ${getTierRange(tk)}</span>
           <span class="result-player-name">${name}</span>
           <span style="font-size:0.65rem;color:var(--text-dim);margin-left:auto;">${score}</span>
           ${isRand ? '<span class="random-tag">🎲</span>' : ""}
