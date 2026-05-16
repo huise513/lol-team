@@ -28,6 +28,21 @@
                 --team4: #1e90ff;
                 --team5: #a855f7;
             }
+            [data-theme="light"] {
+                --bg: #f0f2f5;
+                --card: #ffffff;
+                --border: #dde1e7;
+                --accent: #5b52e0;
+                --accent-light: #7a73f0;
+                --red: #e83e4d;
+                --red-light: #f05663;
+                --blue: #0f87e8;
+                --blue-light: #3a9fff;
+                --green: #28b862;
+                --orange: #f0920a;
+                --text: #1a1a2e;
+                --text-dim: #6b7280;
+            }
 
             * {
                 margin: 0;
@@ -69,6 +84,19 @@
                 animation: bgFloat 20s ease-in-out infinite;
                 z-index: 0;
             }
+            [data-theme="light"] body::before {
+                background:
+                    radial-gradient(
+                        ellipse at 30% 20%,
+                        rgba(91, 82, 224, 0.06) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        ellipse at 70% 80%,
+                        rgba(232, 62, 77, 0.05) 0%,
+                        transparent 50%
+                    );
+            }
 
             @keyframes bgFloat {
                 0%,
@@ -93,9 +121,12 @@
             }
 
             .header {
-                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 flex-shrink: 0;
                 padding-bottom: 6px;
+                position: relative;
             }
             .header h1 {
                 font-size: 1.5rem;
@@ -111,6 +142,39 @@
                 background-clip: text;
                 letter-spacing: 1px;
             }
+            .theme-toggle {
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: 1.5px solid var(--border);
+                background: var(--card);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.1rem;
+                transition: all 0.25s ease;
+            }
+            .theme-toggle:hover {
+                border-color: var(--accent);
+                background: var(--accent);
+            }
+            .theme-toggle .icon {
+                position: absolute;
+                transition: opacity 0.25s ease;
+            }
+            .sun-icon { opacity: 0; }
+            .moon-icon { opacity: 1; }
+            [data-theme="light"] .theme-toggle .sun-icon { opacity: 1; }
+            [data-theme="light"] .theme-toggle .moon-icon { opacity: 0; }
+            [data-theme="light"] .theme-toggle { background: var(--card); border-color: var(--border); }
+            [data-theme="dark"] .theme-toggle .sun-icon { opacity: 0; }
+            [data-theme="dark"] .theme-toggle .moon-icon { opacity: 1; }
+            [data-theme="dark"] .theme-toggle { background: var(--card); border-color: var(--border); }
 
             .second-bar {
                 display: flex;
@@ -554,7 +618,7 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                font-size: 1.1rem;
+                font-size: 1.2rem;
                 font-weight: 900;
                 background: linear-gradient(
                     135deg,
@@ -662,7 +726,7 @@
 
             .balance-info {
                 text-align: center;
-                padding: 6px 10px;
+                padding: 16px 10px;
                 background: var(--card);
                 border-radius: 8px;
                 border: 1px solid var(--border);
@@ -698,9 +762,10 @@
                 flex-shrink: 0;
             }
             .split-label {
-                font-size: 0.75rem;
-                color: var(--text-dim);
-                margin-top: 3px;
+                font-size: 0.9rem;
+                color: var(--text);
+                margin-top: 4px;
+                font-weight: 500;
             }
 
             .result-actions {
@@ -828,6 +893,10 @@
         <div class="app">
             <div class="header">
                 <h1>开黑分组</h1>
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+                    <span class="icon sun-icon">☀️</span>
+                    <span class="icon moon-icon">🌙</span>
+                </button>
             </div>
 
             <div class="second-bar" id="secondBar">
@@ -898,7 +967,7 @@
                     <div class="balance-info" id="balanceInfo"></div>
                     <div class="result-actions">
                         <button class="back-btn" onclick="goBack()">
-                            ← 重选
+                            &lt; 重选
                         </button>
                         <button class="reshuffle-btn" onclick="generate()">
                             🔄 换一组
@@ -911,13 +980,35 @@
         <div class="toast" id="toast"></div>
 
         <script>
-            const TEAMS = {
-                t1: { label: "T1", players: ["李凯龙", "罗政委"] },
-                t2: { label: "T2", players: ["廖伟", "罗强"] },
-                t3: { label: "T3", players: ["李新", "游浩", "李宇"] },
-                t4: { label: "T4", players: ["郑梦靥", "李立"] },
-                t5: { label: "T5", players: ["陈志超", "陈子龙"] },
-            };
+            const TIER_LABELS = ["T1", "T2", "T3", "T4", "T5"];
+
+            // 主题管理
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            const savedTheme = localStorage.getItem("theme");
+            const currentTheme = savedTheme || (prefersDark ? "dark" : "light");
+            document.documentElement.dataset.theme = currentTheme;
+
+            function toggleTheme() {
+                const now = document.documentElement.dataset.theme;
+                const next = now === "dark" ? "light" : "dark";
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem("theme", next);
+            }
+
+            function getTierByScore(score) {
+                if (score >= 95) return "T1";
+                if (score >= 85) return "T2";
+                if (score >= 75) return "T3";
+                if (score >= 65) return "T4";
+                return "T5";
+            }
+
+            // 获取指定T级别的所有玩家
+            function getPlayersByTier(tier) {
+                return Object.entries(SKILL)
+                    .filter(([_, score]) => getTierByScore(score) === tier)
+                    .map(([name]) => name);
+            }
 
             const SKILL = {
                 李凯龙: 100,
@@ -925,7 +1016,7 @@
                 廖伟: 90,
                 罗强: 85,
                 李新: 85,
-                游浩: 80,
+                游浩: 85,
                 李宇: 75,
                 郑梦靥: 70,
                 李立: 65,
@@ -933,15 +1024,25 @@
                 陈子龙: 55,
             };
 
+            const TIER_PLAYERS_CACHE = {};
+            function getPlayersByTier(tier) {
+                if (TIER_PLAYERS_CACHE[tier]) return TIER_PLAYERS_CACHE[tier];
+                const players = Object.entries(SKILL)
+                    .filter(([_, score]) => getTierByScore(score) === tier)
+                    .map(([name]) => name);
+                TIER_PLAYERS_CACHE[tier] = players;
+                return players;
+            }
+
             let selectedPlayers = new Set();
             let strategy = "score"; // 'score' or 'split'
             // Per-T random toggle
             let teamRandom = {
-                t1: false,
-                t2: false,
-                t3: false,
-                t4: false,
-                t5: false,
+                T1: false,
+                T2: false,
+                T3: false,
+                T4: false,
+                T5: false,
             };
 
             function init() {
@@ -954,15 +1055,16 @@
                 list.innerHTML = "";
                 const isScoreMode = strategy === "score";
                 let idx = 1;
-                for (const [key, team] of Object.entries(TEAMS)) {
+                for (const key of TIER_LABELS) {
                     const isRandom = teamRandom[key];
+                    const players = getPlayersByTier(key);
 
                     const row = document.createElement("div");
                     row.className = "team-row";
                     row.dataset.team = idx;
                     row.innerHTML = `
         <div class="team-top">
-          <div class="team-header">${team.label} · ${team.players.length}人</div>
+          <div class="team-header">${key} · ${players.length}人</div>
           ${
               isScoreMode
                   ? ""
@@ -975,7 +1077,7 @@
           }
         </div>
         <div class="players-inline">
-          ${team.players
+          ${players
               .map(
                   (p) => `
             <div class="player-chip ${selectedPlayers.has(p) ? "selected" : ""} ${!isScoreMode && isRandom && selectedPlayers.has(p) ? "show-random" : ""}" onclick="togglePlayer('${p}')">
@@ -1019,8 +1121,10 @@
             }
 
             function selectAll() {
-                for (const team of Object.values(TEAMS)) {
-                    team.players.forEach((p) => selectedPlayers.add(p));
+                for (const key of TIER_LABELS) {
+                    getPlayersByTier(key).forEach((p) =>
+                        selectedPlayers.add(p),
+                    );
                 }
                 renderTeamsList();
                 updateCount();
@@ -1108,9 +1212,9 @@
                 let teamA = [];
                 let teamB = [];
 
-                for (const [key, team] of Object.entries(TEAMS)) {
+                for (const key of TIER_LABELS) {
                     if (teamRandom[key]) continue;
-                    const members = team.players.filter((p) =>
+                    const members = getPlayersByTier(key).filter((p) =>
                         selectedPlayers.has(p),
                     );
                     const shuffled = shuffle([...members]);
@@ -1121,9 +1225,9 @@
                 }
 
                 let randomPool = [];
-                for (const [key, team] of Object.entries(TEAMS)) {
+                for (const key of TIER_LABELS) {
                     if (!teamRandom[key]) continue;
-                    const members = team.players.filter((p) =>
+                    const members = getPlayersByTier(key).filter((p) =>
                         selectedPlayers.has(p),
                     );
                     randomPool.push(...members);
@@ -1189,31 +1293,26 @@
                     strategy === "score" ? "📊 按分值" : "🏷️ 按梯队";
                 modeTag.innerHTML = `<span>${n / 2}v${n / 2} · ${strategyLabel}</span>`;
 
-                // Build set of random-pool players for tagging
+                // Build set of random-pool players for tagging (only for split strategy)
                 const randomPlayers = new Set();
-                for (const [key, team] of Object.entries(TEAMS)) {
-                    if (teamRandom[key]) {
-                        team.players
-                            .filter((p) => selectedPlayers.has(p))
-                            .forEach((p) => randomPlayers.add(p));
+                if (strategy === "split") {
+                    for (const key of TIER_LABELS) {
+                        if (teamRandom[key]) {
+                            getPlayersByTier(key)
+                                .filter((p) => selectedPlayers.has(p))
+                                .forEach((p) => randomPlayers.add(p));
+                        }
                     }
-                }
-
-                function getPlayerTeamKey(name) {
-                    for (const [key, data] of Object.entries(TEAMS)) {
-                        if (data.players.includes(name)) return key;
-                    }
-                    return "t1";
                 }
 
                 function renderPlayer(name) {
-                    const tk = getPlayerTeamKey(name);
-                    const ti = Object.keys(TEAMS).indexOf(tk) + 1;
-                    const isRand = randomPlayers.has(name);
+                    const tk = getTierByScore(SKILL[name]);
+                    const ti = TIER_LABELS.indexOf(tk) + 1;
+                    const isRand = strategy !== "score" && randomPlayers.has(name);
                     const score = SKILL[name] || 0;
                     return `
         <div class="result-player">
-          <span class="player-team-badge badge-t${ti}">${TEAMS[tk].label}</span>
+          <span class="player-team-badge badge-t${ti}">${tk}</span>
           <span class="result-player-name">${name}</span>
           <span style="font-size:0.65rem;color:var(--text-dim);margin-left:auto;">${score}</span>
           ${isRand ? '<span class="random-tag">🎲</span>' : ""}
@@ -1226,10 +1325,9 @@
                 const scoreDiff = Math.abs(scoreA - scoreB);
 
                 // Sort players by T1-T5 order, then by score descending within same T
-                const teamOrder = Object.keys(TEAMS);
                 const sortByTeam = (a, b) => {
-                    const ta = teamOrder.indexOf(getPlayerTeamKey(a));
-                    const tb = teamOrder.indexOf(getPlayerTeamKey(b));
+                    const ta = TIER_LABELS.indexOf(getTierByScore(SKILL[a]));
+                    const tb = TIER_LABELS.indexOf(getTierByScore(SKILL[b]));
                     if (ta !== tb) return ta - tb;
                     return (SKILL[b] || 0) - (SKILL[a] || 0);
                 };
@@ -1258,9 +1356,9 @@
                 // Count how many non-random teams are split across sides
                 let splitCount = 0;
                 let totalTSplit = 0;
-                for (const [key, data] of Object.entries(TEAMS)) {
+                for (const key of TIER_LABELS) {
                     if (teamRandom[key]) continue;
-                    const allSelected = data.players.filter((p) =>
+                    const allSelected = getPlayersByTier(key).filter((p) =>
                         selectedPlayers.has(p),
                     );
                     if (allSelected.length >= 2) {
@@ -1280,9 +1378,9 @@
 
                 let infoHtml = "";
                 if (strategy === "score") {
-                    const diffColor =
-                        scoreDiff <= 10 ? "var(--green)" : "var(--red)";
-                    infoHtml += `<div class="split-label">分差 <span style="color:${diffColor};font-weight:700;">${scoreDiff}</span> ${scoreDiff <= 10 ? "✅ 势均力敌" : "⚠️ 有差距"}</div>`;
+                    const diffColor = scoreDiff === 0 ? "var(--green)" : scoreDiff <= 5 ? "var(--green)" : scoreDiff <= 10 ? "var(--orange)" : "var(--red)";
+                    const diffLabel = scoreDiff === 0 ? "💎 完美均衡" : scoreDiff <= 5 ? "✅ 势均力敌" : scoreDiff <= 10 ? "⚡ 略有差距" : "⚠️ 差距较大";
+                    infoHtml += `<div class="split-label">分差 <span style="color:${diffColor};font-weight:700;">${scoreDiff}</span> ${diffLabel}</div>`;
                 } else {
                     if (balancedCount > 0) {
                         infoHtml += `<div class="split-label">${splitCount}/${totalTSplit} 个梯队拆分到两边</div>`;
