@@ -1031,6 +1031,22 @@ function getTierByScore(score) {
                 陈子龙: 65,
             };
 
+            // 玩家名（不显示，仅供爬虫抓取）
+            const PLAYER_NAMES = {
+                李凯龙: "lhh011",
+                罗政委: "TT毕加索",
+                廖伟: "liaowei",
+                罗强: "TT梵高",
+                李新: "小学五年级",
+                游浩: "Dark丶小诙诙",
+                陈志超: "TT达芬奇",
+                李宇: "大学毕业",
+                郑梦靥: "枪炮与玫瑰GnR",
+                风一刀: "风一刀",
+                李立: "毒血狂狼",
+                陈子龙: "帅气的老汉",
+            };
+
             const TIER_PLAYERS_CACHE = {};
             function getPlayersByTier(tier) {
                 if (TIER_PLAYERS_CACHE[tier]) return TIER_PLAYERS_CACHE[tier];
