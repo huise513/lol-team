@@ -995,16 +995,17 @@
                 localStorage.setItem("theme", next);
             }
 
-            function getTierByScore(score) {
-                if (score >= 95) return "T1";
-                if (score >= 85) return "T2";
-                if (score >= 75) return "T3";
-                if (score >= 65) return "T4";
+function getTierByScore(score) {
+                if (score >= 90) return "T1";
+                if (score >= 80) return "T2";
+                if (score >= 70) return "T3";
+                if (score >= 60) return "T4";
+                if (score >= 50) return "T5";
                 return "T5";
             }
 
             function getTierRange(tier) {
-                const ranges = { T1: "95+", T2: "85-94", T3: "75-84", T4: "65-74", T5: "0-64" };
+                const ranges = { T1: "90+", T2: "80-89", T3: "70-79", T4: "60-69", T5: "50-59" };
                 return ranges[tier] || "";
             }
 
@@ -1016,18 +1017,18 @@
             }
 
             const SKILL = {
-                李凯龙: 100,
-                罗政委: 95,
-                廖伟: 90,
-                罗强: 85,
+                李凯龙: 98,
+                罗政委: 93,
+                廖伟: 95,
+                罗强: 87,
                 李新: 85,
-                游浩: 85,
-                李宇: 75,
+                游浩: 89,
+                陈志超: 63,
+                李宇: 77,
+                郑梦靥: 75,
                 风一刀: 75,
-                郑梦靥: 70,
-                李立: 65,
-                陈志超: 65,
-                陈子龙: 55,
+                李立: 67,
+                陈子龙: 65,
             };
 
             const TIER_PLAYERS_CACHE = {};
