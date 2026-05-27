@@ -936,7 +936,17 @@
                         <p>
                             📊
                             <span class="hl">按分值随机</span
-                            >：按实力分值随机分组，确保两队分差≤10
+                            >：按实力分值随机分组，确保两队分差≤
+                            <input
+                                id="maxDiffInput"
+                                type="number"
+                                min="1"
+                                max="20"
+                                value="8"
+                                style="width:42px;background:var(--card);border:1px solid var(--border);border-radius:4px;color:var(--accent-light);font-weight:600;text-align:center;padding:1px 4px;font-size:0.78rem;"
+                                onchange="updateMaxDiffLabel(this.value)"
+                            />
+                            <span id="maxDiffLabel">分</span>
                         </p>
                         <p>
                             🏷️
@@ -1143,6 +1153,10 @@ function getTierByScore(score) {
                 renderTeamsList();
             }
 
+            function updateMaxDiffLabel(val) {
+                document.getElementById('maxDiffLabel').textContent = val + '分';
+            }
+
             function selectAll() {
                 for (const key of TIER_LABELS) {
                     getPlayersByTier(key).forEach((p) =>
@@ -1266,12 +1280,12 @@ function getTierByScore(score) {
                 return [teamA, teamB];
             }
 
-            // Strategy 2: Score-based — try many random splits, pick one with min score diff (≤10)
+            // Strategy 2: Score-based — try many random splits, pick one with min score diff (≤maxDiff)
             function generateScoreBased(n) {
                 const teamSize = n / 2;
                 const allSelected = [...selectedPlayers];
-                const MAX_DIFF = 10;
-                const ATTEMPTS = 3000;
+                const maxDiff = parseInt(document.getElementById('maxDiffInput')?.value) || 8;
+                const ATTEMPTS = 5000;
 
                 let bestA = null,
                     bestB = null,
@@ -1290,7 +1304,7 @@ function getTierByScore(score) {
                         bestDiff = diff;
                         bestA = a;
                         bestB = b;
-                        if (diff <= MAX_DIFF) break; // good enough
+                        if (diff <= maxDiff) break; // good enough
                     }
                 }
 
