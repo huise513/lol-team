@@ -1050,10 +1050,9 @@
                 帅气的老汉: 78,
             };
             const SKILL = Object.fromEntries(
-                Object.entries(SCORES).map(([name, score]) => [
-                    PLAYER_NAMES[name],
-                    score,
-                ]),
+                Object.entries(SCORES)
+                    .map(([name, score]) => [PLAYER_NAMES[name], score])
+                    .sort((a, b) => b[1] - a[1]),
             );
 
             const TIER_LABELS = ["T1", "T2", "T3", "T4", "T5"];
