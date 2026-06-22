@@ -167,14 +167,32 @@
                 position: absolute;
                 transition: opacity 0.25s ease;
             }
-            .sun-icon { opacity: 0; }
-            .moon-icon { opacity: 1; }
-            [data-theme="light"] .theme-toggle .sun-icon { opacity: 1; }
-            [data-theme="light"] .theme-toggle .moon-icon { opacity: 0; }
-            [data-theme="light"] .theme-toggle { background: var(--card); border-color: var(--border); }
-            [data-theme="dark"] .theme-toggle .sun-icon { opacity: 0; }
-            [data-theme="dark"] .theme-toggle .moon-icon { opacity: 1; }
-            [data-theme="dark"] .theme-toggle { background: var(--card); border-color: var(--border); }
+            .sun-icon {
+                opacity: 0;
+            }
+            .moon-icon {
+                opacity: 1;
+            }
+            [data-theme="light"] .theme-toggle .sun-icon {
+                opacity: 1;
+            }
+            [data-theme="light"] .theme-toggle .moon-icon {
+                opacity: 0;
+            }
+            [data-theme="light"] .theme-toggle {
+                background: var(--card);
+                border-color: var(--border);
+            }
+            [data-theme="dark"] .theme-toggle .sun-icon {
+                opacity: 0;
+            }
+            [data-theme="dark"] .theme-toggle .moon-icon {
+                opacity: 1;
+            }
+            [data-theme="dark"] .theme-toggle {
+                background: var(--card);
+                border-color: var(--border);
+            }
 
             .second-bar {
                 display: flex;
@@ -893,7 +911,11 @@
         <div class="app">
             <div class="header">
                 <h1>开黑分组</h1>
-                <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+                <button
+                    class="theme-toggle"
+                    onclick="toggleTheme()"
+                    aria-label="切换主题"
+                >
                     <span class="icon sun-icon">☀️</span>
                     <span class="icon moon-icon">🌙</span>
                 </button>
@@ -935,15 +957,24 @@
                     <div class="hint-box" id="hintBox">
                         <p>
                             📊
-                            <span class="hl">按分值随机</span
-                            >：分差≤
+                            <span class="hl">按分值随机</span>：分差≤
                             <input
                                 id="maxDiffInput"
                                 type="number"
                                 min="1"
                                 max="20"
                                 value="8"
-                                style="width:38px;background:var(--card);border:1px solid var(--border);border-radius:4px;color:var(--accent-light);font-weight:600;text-align:center;padding:1px 3px;font-size:0.78rem;"
+                                style="
+                                    width: 38px;
+                                    background: var(--card);
+                                    border: 1px solid var(--border);
+                                    border-radius: 4px;
+                                    color: var(--accent-light);
+                                    font-weight: 600;
+                                    text-align: center;
+                                    padding: 1px 3px;
+                                    font-size: 0.78rem;
+                                "
                                 onchange="updateMaxDiffLabel(this.value)"
                             />
                             <span id="maxDiffLabel">分</span>
@@ -990,10 +1021,47 @@
         <div class="toast" id="toast"></div>
 
         <script>
+            const PLAYER_NAMES = {
+                lhh011: "李凯龙",
+                TT毕加索: "罗政委",
+                liaowei: "廖伟",
+                TT梵高: "罗强",
+                小学五年级: "李新",
+                Dark丶小诙诙: "游浩",
+                TT达芬奇: "陈志超",
+                大学毕业: "李宇",
+                枪炮与玫瑰GnR: "郑梦靥",
+                风一刀: "风一刀",
+                毒血狂狼: "李立",
+                帅气的老汉: "陈子龙",
+            };
+            const SCORES = {
+                lhh011: 85,
+                TT毕加索: 80,
+                liaowei: 91,
+                TT梵高: 86,
+                小学五年级: 91,
+                Dark丶小诙诙: 89,
+                TT达芬奇: 74,
+                大学毕业: 81,
+                枪炮与玫瑰GnR: 79,
+                风一刀: 75,
+                毒血狂狼: 80,
+                帅气的老汉: 78,
+            };
+            const SKILL = Object.fromEntries(
+                Object.entries(SCORES).map(([name, score]) => [
+                    PLAYER_NAMES[name],
+                    score,
+                ]),
+            );
+
             const TIER_LABELS = ["T1", "T2", "T3", "T4", "T5"];
 
             // 主题管理
-            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            const prefersDark = window.matchMedia(
+                "(prefers-color-scheme: dark)",
+            ).matches;
             const savedTheme = localStorage.getItem("theme");
             const currentTheme = savedTheme || (prefersDark ? "dark" : "light");
             document.documentElement.dataset.theme = currentTheme;
@@ -1005,7 +1073,7 @@
                 localStorage.setItem("theme", next);
             }
 
-function getTierByScore(score) {
+            function getTierByScore(score) {
                 if (score >= 90) return "T1";
                 if (score >= 80) return "T2";
                 if (score >= 70) return "T3";
@@ -1015,47 +1083,15 @@ function getTierByScore(score) {
             }
 
             function getTierRange(tier) {
-                const ranges = { T1: "90+", T2: "80-89", T3: "70-79", T4: "60-69", T5: "50-59" };
+                const ranges = {
+                    T1: "90+",
+                    T2: "80-89",
+                    T3: "70-79",
+                    T4: "60-69",
+                    T5: "50-59",
+                };
                 return ranges[tier] || "";
             }
-
-            // 获取指定T级别的所有玩家
-            function getPlayersByTier(tier) {
-                return Object.entries(SKILL)
-                    .filter(([_, score]) => getTierByScore(score) === tier)
-                    .map(([name]) => name);
-            }
-
-            const SKILL = {
-                李凯龙: 88,
-                罗政委: 90,
-                廖伟: 89,
-                罗强: 80,
-                李新: 86,
-                游浩: 88,
-                陈志超: 74,
-                李宇: 75,
-                郑梦靥: 78,
-                风一刀: 75,
-                李立: 78,
-                陈子龙: 79,
-            };
-
-            // 玩家名（不显示，仅供爬虫抓取）
-            const PLAYER_NAMES = {
-                李凯龙: "lhh011",
-                罗政委: "TT毕加索",
-                廖伟: "liaowei",
-                罗强: "TT梵高",
-                李新: "小学五年级",
-                游浩: "Dark丶小诙诙",
-                陈志超: "TT达芬奇",
-                李宇: "大学毕业",
-                郑梦靥: "枪炮与玫瑰GnR",
-                风一刀: "风一刀",
-                李立: "毒血狂狼",
-                陈子龙: "帅气的老汉",
-            };
 
             const TIER_PLAYERS_CACHE = {};
             function getPlayersByTier(tier) {
@@ -1096,35 +1132,35 @@ function getTierByScore(score) {
                     row.className = "team-row";
                     row.dataset.team = idx;
                     row.innerHTML = `
-        <div class="team-top">
-          <div class="team-header">${key} · ${getTierRange(key)} · ${players.length}人</div>
-          ${
-              isScoreMode
-                  ? ""
-                  : `<div class="toggle-wrap" onclick="toggleRandom('${key}')">
-            <span class="toggle-label ${isRandom ? "active" : ""}">🎲 随机</span>
-            <div class="toggle-track ${isRandom ? "on" : ""}">
-              <div class="toggle-knob"></div>
-            </div>
-          </div>`
-          }
-        </div>
-        <div class="players-inline">
-          ${players
-              .map(
-                  (p) => `
-            <div class="player-chip ${selectedPlayers.has(p) ? "selected" : ""} ${!isScoreMode && isRandom && selectedPlayers.has(p) ? "show-random" : ""}" onclick="togglePlayer('${p}')">
-              <div class="chip-check">
-                <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
-              </div>
-              <span class="chip-name">${p} <span style="font-size:0.65rem;opacity:0.6">${SKILL[p]}</span></span>
-              <div class="chip-random-dot"></div>
-            </div>
-          `,
-              )
-              .join("")}
-        </div>
-      `;
+                    <div class="team-top">
+                      <div class="team-header">${key} · ${getTierRange(key)} · ${players.length}人</div>
+                      ${
+                          isScoreMode
+                              ? ""
+                              : `<div class="toggle-wrap" onclick="toggleRandom('${key}')">
+                        <span class="toggle-label ${isRandom ? "active" : ""}">🎲 随机</span>
+                        <div class="toggle-track ${isRandom ? "on" : ""}">
+                          <div class="toggle-knob"></div>
+                        </div>
+                      </div>`
+                      }
+                    </div>
+                    <div class="players-inline">
+                      ${players
+                          .map(
+                              (p) => `
+                        <div class="player-chip ${selectedPlayers.has(p) ? "selected" : ""} ${!isScoreMode && isRandom && selectedPlayers.has(p) ? "show-random" : ""}" onclick="togglePlayer('${p}')">
+                          <div class="chip-check">
+                            <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
+                          </div>
+                          <span class="chip-name">${p} <span style="font-size:0.65rem;opacity:0.6">${SKILL[p]}</span></span>
+                          <div class="chip-random-dot"></div>
+                        </div>
+                      `,
+                          )
+                          .join("")}
+                    </div>
+                  `;
                     list.appendChild(row);
                     idx++;
                 }
@@ -1154,7 +1190,8 @@ function getTierByScore(score) {
             }
 
             function updateMaxDiffLabel(val) {
-                document.getElementById('maxDiffLabel').textContent = val + '分';
+                document.getElementById("maxDiffLabel").textContent =
+                    val + "分";
             }
 
             function selectAll() {
@@ -1284,7 +1321,9 @@ function getTierByScore(score) {
             function generateScoreBased(n) {
                 const teamSize = n / 2;
                 const allSelected = [...selectedPlayers];
-                const maxDiff = parseInt(document.getElementById('maxDiffInput')?.value) || 8;
+                const maxDiff =
+                    parseInt(document.getElementById("maxDiffInput")?.value) ||
+                    8;
                 const ATTEMPTS = 5000;
 
                 let bestA = null,
@@ -1345,16 +1384,17 @@ function getTierByScore(score) {
                 function renderPlayer(name) {
                     const tk = getTierByScore(SKILL[name]);
                     const ti = TIER_LABELS.indexOf(tk) + 1;
-                    const isRand = strategy !== "score" && randomPlayers.has(name);
+                    const isRand =
+                        strategy !== "score" && randomPlayers.has(name);
                     const score = SKILL[name] || 0;
                     return `
-        <div class="result-player">
-          <span class="player-team-badge badge-t${ti}">${tk}</span>
-          <span class="result-player-name">${name}</span>
-          <span style="font-size:0.65rem;color:var(--text-dim);margin-left:auto;">${score}</span>
-          ${isRand ? '<span class="random-tag">🎲</span>' : ""}
-        </div>
-      `;
+                    <div class="result-player">
+                      <span class="player-team-badge badge-t${ti}">${tk}</span>
+                      <span class="result-player-name">${name}</span>
+                      <span style="font-size:0.65rem;color:var(--text-dim);margin-left:auto;">${score}</span>
+                      ${isRand ? '<span class="random-tag">🎲</span>' : ""}
+                    </div>
+                  `;
                 }
 
                 const scoreA = teamA.reduce((s, p) => s + (SKILL[p] || 0), 0);
@@ -1372,23 +1412,23 @@ function getTierByScore(score) {
                 teamB.sort(sortByTeam);
 
                 battleField.innerHTML = `
-      <div class="team-result red-team">
-        <div class="team-result-header">
-          <div class="team-icon">🔴</div>
-          <span class="team-result-name">红队</span>
-          <span style="font-size:0.72rem;color:var(--red-light);margin-left:auto;">${scoreA}分</span>
-        </div>
-        ${teamA.map(renderPlayer).join("")}
-      </div>
-      <div class="team-result blue-team">
-        <div class="team-result-header">
-          <div class="team-icon">🔵</div>
-          <span class="team-result-name">蓝队</span>
-          <span style="font-size:0.72rem;color:var(--blue-light);margin-left:auto;">${scoreB}分</span>
-        </div>
-        ${teamB.map(renderPlayer).join("")}
-      </div>
-    `;
+                  <div class="team-result red-team">
+                    <div class="team-result-header">
+                      <div class="team-icon">🔴</div>
+                      <span class="team-result-name">红队</span>
+                      <span style="font-size:0.72rem;color:var(--red-light);margin-left:auto;">${scoreA}分</span>
+                    </div>
+                    ${teamA.map(renderPlayer).join("")}
+                  </div>
+                  <div class="team-result blue-team">
+                    <div class="team-result-header">
+                      <div class="team-icon">🔵</div>
+                      <span class="team-result-name">蓝队</span>
+                      <span style="font-size:0.72rem;color:var(--blue-light);margin-left:auto;">${scoreB}分</span>
+                    </div>
+                    ${teamB.map(renderPlayer).join("")}
+                  </div>
+                `;
 
                 // Count how many non-random teams are split across sides
                 let splitCount = 0;
@@ -1415,8 +1455,22 @@ function getTierByScore(score) {
 
                 let infoHtml = "";
                 if (strategy === "score") {
-                    const diffColor = scoreDiff === 0 ? "var(--green)" : scoreDiff <= 5 ? "var(--green)" : scoreDiff <= 10 ? "var(--orange)" : "var(--red)";
-                    const diffLabel = scoreDiff === 0 ? "💎 完美均衡" : scoreDiff <= 5 ? "✅ 势均力敌" : scoreDiff <= 10 ? "⚡ 略有差距" : "⚠️ 差距较大";
+                    const diffColor =
+                        scoreDiff === 0
+                            ? "var(--green)"
+                            : scoreDiff <= 5
+                              ? "var(--green)"
+                              : scoreDiff <= 10
+                                ? "var(--orange)"
+                                : "var(--red)";
+                    const diffLabel =
+                        scoreDiff === 0
+                            ? "💎 完美均衡"
+                            : scoreDiff <= 5
+                              ? "✅ 势均力敌"
+                              : scoreDiff <= 10
+                                ? "⚡ 略有差距"
+                                : "⚠️ 差距较大";
                     infoHtml += `<div class="split-label">分差 <span style="color:${diffColor};font-weight:700;">${scoreDiff}</span> ${diffLabel}</div>`;
                 } else {
                     if (balancedCount > 0) {
